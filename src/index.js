@@ -44,4 +44,6 @@ export {
 	//commands
 };
 
+export { OHIF };
+
 export default OHIF;
