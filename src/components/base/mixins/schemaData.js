@@ -1,4 +1,4 @@
-import { OHIF } from 'meteor/ohif:core';
+
 import { Blaze } from 'meteor/blaze';
 import { Template } from 'meteor/templating';
 import { ReactiveVar } from 'meteor/reactive-var';

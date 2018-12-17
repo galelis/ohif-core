@@ -1,7 +1,7 @@
 import { Session } from 'meteor/session';
 import { Tracker } from 'meteor/tracker';
 
-import { OHIF } from 'meteor/ohif:core';
+
 
 import { OHIFPlugin } from "./OHIFPlugin";
 

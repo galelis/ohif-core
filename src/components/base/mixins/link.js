@@ -1,5 +1,5 @@
 import { Template } from 'meteor/templating';
-import { OHIF } from 'meteor/ohif:core';
+
 
 /*
  * link: controls a link

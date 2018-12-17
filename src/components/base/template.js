@@ -1,7 +1,7 @@
 import { Template } from 'meteor/templating';
 import { Blaze } from 'meteor/blaze';
 import _ from 'underscore';
-import { OHIF } from 'meteor/ohif:core';
+
 
 // Create a new custom template for the base component
 Template.baseComponent = new Template('baseComponent', () => {});

@@ -1,6 +1,6 @@
 import { Template } from 'meteor/templating';
 import _ from 'underscore';
-import { OHIF } from 'meteor/ohif:core';
+
 
 Template.scrollArea.onCreated(() => {
     const instance = Template.instance();

@@ -1,7 +1,7 @@
-import { Meteor } from 'meteor/meteor';
+import { Meteor } from '';
 import { Template } from 'meteor/templating';
 import _ from 'underscore';
-import { OHIF } from 'meteor/ohif:core';
+
 
 Template.dialogSimple.onCreated(() => {
     const instance = Template.instance();

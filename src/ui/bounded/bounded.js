@@ -1,6 +1,6 @@
 import $ from 'jquery';
 import _ from 'underscore';
-import { OHIF } from 'meteor/ohif:core';
+
 
 // Allow attaching to jQuery selectors
 $.fn.bounded = function(options) {

@@ -1,6 +1,6 @@
 import { Template } from 'meteor/templating';
 import { Blaze } from 'meteor/blaze';
-import { OHIF } from 'meteor/ohif:core';
+
 
 OHIF.ui.showPopover = (templateName, popoverData, options={}) => {
     // Check if the given template exists

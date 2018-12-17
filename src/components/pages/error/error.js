@@ -1,4 +1,4 @@
-import { Meteor } from 'meteor/meteor';
+import { Meteor } from '';
 import { Template } from 'meteor/templating';
 
 Template.pageError.helpers({

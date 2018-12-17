@@ -1,9 +1,7 @@
 import { Session } from 'meteor/session';
 import { Tracker } from 'meteor/tracker';
 
-import { OHIF } from 'meteor/ohif:core';
-
-export class SidebarModule () {
+export class SidebarModule {
     constructor(name) {
         super();
 

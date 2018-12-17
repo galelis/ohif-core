@@ -8,12 +8,11 @@ var reactiveDict = require('meteor/reactive-dict');
 var templating = require('meteor/templating');
 var blaze = require('meteor/blaze');
 var tracker = require('meteor/tracker');
-require('meteor/check');
 var cornerstoneMath = _interopDefault(require('cornerstone-math'));
-var meteor = require('meteor/meteor');
+var dicomParser = _interopDefault(require('dicom-parser'));
 var session = require('meteor/session');
-var ohif_cornerstone = require('meteor/ohif:cornerstone');
-var ohif_core = require('meteor/ohif:core');
+var cornerstone$1 = _interopDefault(require('cornerstone-core'));
+require('cornerstone-tools');
 var reactiveVar = require('meteor/reactive-var');
 
 var commonjsGlobal = typeof window !== 'undefined' ? window : typeof global !== 'undefined' ? global : typeof self !== 'undefined' ? self : {};
@@ -849,7 +848,7 @@ var DICOMwebClient = unwrapExports(dicomwebClient);
 function resultDataToStudyMetadata(server, studyInstanceUid, resultData) {
   const {
     DICOMWeb
-  } = ohif_core.OHIF;
+  } = OHIF;
   var seriesMap = {};
   var seriesList = [];
   resultData.forEach(function (instance) {
@@ -904,7 +903,7 @@ function Instances(server, studyInstanceUid) {
   // TODO: Are we using this function anywhere?? Can we remove it?
   const config = {
     url: server.qidoRoot,
-    headers: ohif_core.OHIF.DICOMWeb.getAuthorizationHeader()
+    headers: OHIF.DICOMWeb.getAuthorizationHeader()
   };
   const dicomWeb = new DICOMwebClient.api.DICOMwebClient(config);
   const queryParams = getQIDOQueryParams(filter, server.qidoSupportsIncludeField);
@@ -1004,7 +1003,7 @@ function getQIDOQueryParams$1(filter, serverSupportsQIDOIncludeField) {
 function resultDataToStudies(resultData) {
   const {
     DICOMWeb
-  } = ohif_core.OHIF;
+  } = OHIF;
   const studies = [];
   if (!resultData || !resultData.length) return;
   resultData.forEach(study => studies.push({
@@ -1033,7 +1032,7 @@ function resultDataToStudies(resultData) {
 function Studies(server, filter) {
   const config = {
     url: server.qidoRoot,
-    headers: ohif_core.OHIF.DICOMWeb.getAuthorizationHeader()
+    headers: OHIF.DICOMWeb.getAuthorizationHeader()
   };
   const dicomWeb = new DICOMwebClient.api.DICOMwebClient(config);
   const queryParams = getQIDOQueryParams$1(filter, server.qidoSupportsIncludeField);
@@ -1050,7 +1049,7 @@ const parseFloatArray = function (obj) {
     return result;
   }
 
-  var objs = obj.split("\\");
+  var objs = obj.split('\\');
 
   for (var i = 0; i < objs.length; i++) {
     result.push(parseFloat(objs[i]));
@@ -1170,7 +1169,7 @@ function getPaletteColor(server, instance, tag, lutDescriptor) {
   const config = {
     url: server.wadoRoot,
     //BulkDataURI is absolute, so this isn't used
-    headers: ohif_core.OHIF.DICOMWeb.getAuthorizationHeader()
+    headers: OHIF.DICOMWeb.getAuthorizationHeader()
   };
   const dicomWeb = new DICOMwebClient.api.DICOMwebClient(config);
   const options = {
@@ -1210,7 +1209,7 @@ function getPaletteColor(server, instance, tag, lutDescriptor) {
 async function getPaletteColors(server, instance, lutDescriptor) {
   const {
     DICOMWeb
-  } = ohif_core.OHIF;
+  } = OHIF;
   let paletteUID = DICOMWeb.getString(instance['00281199']);
   return new Promise((resolve, reject) => {
     if (paletteColorCache.isValidUID(paletteUID)) {
@@ -1257,7 +1256,7 @@ function getFrameIncrementPointer(element) {
 function getRadiopharmaceuticalInfo(instance) {
   const {
     DICOMWeb
-  } = ohif_core.OHIF;
+  } = OHIF;
   const modality = DICOMWeb.getString(instance['00080060']);
 
   if (modality !== 'PT') {
@@ -1292,7 +1291,7 @@ function getRadiopharmaceuticalInfo(instance) {
 async function resultDataToStudyMetadata$1(server, studyInstanceUid, resultData) {
   const {
     DICOMWeb
-  } = ohif_core.OHIF;
+  } = OHIF;
 
   if (!resultData.length) {
     return;
@@ -1431,7 +1430,7 @@ async function resultDataToStudyMetadata$1(server, studyInstanceUid, resultData)
 async function RetrieveMetadata(server, studyInstanceUid) {
   const config = {
     url: server.wadoRoot,
-    headers: ohif_core.OHIF.DICOMWeb.getAuthorizationHeader()
+    headers: OHIF.DICOMWeb.getAuthorizationHeader()
   };
   const dicomWeb = new DICOMwebClient.api.DICOMwebClient(config);
   const options = {
@@ -1449,75 +1448,6 @@ const WADO = {
 const QIDO = {
   Studies,
   Instances
-};
-
-ohif_core.OHIF.blaze = {}; // Clone a template and return the clone
-
-ohif_core.OHIF.blaze.cloneTemplate = (template, newName) => {
-  if (!template) {
-    return;
-  }
-
-  const name = newName || template.viewName;
-  const clone = new templating.Template(name, template.renderFunction);
-  clone.inheritsEventsFrom(template);
-  clone.inheritsHelpersFrom(template);
-  clone.inheritsHooksFrom(template);
-  return clone;
-}; // Navigate upwards the component and get the parent with the given view name
-
-
-ohif_core.OHIF.blaze.getParentView = (view, parentViewName) => {
-  let currentView = view;
-
-  while (currentView) {
-    if (currentView.name === parentViewName) {
-      break;
-    }
-
-    currentView = currentView.originalParentView || currentView.parentView;
-  }
-
-  return currentView;
-}; // Search for the parent component of the given view
-
-
-ohif_core.OHIF.blaze.getParentComponent = (view, property = '_component') => {
-  let currentView = view;
-
-  while (currentView) {
-    currentView = currentView.originalParentView || currentView.parentView;
-
-    if (currentView && currentView[property]) {
-      return currentView[property];
-    }
-  }
-}; // Search for the parent template of the given view
-
-
-ohif_core.OHIF.blaze.getParentTemplateView = view => {
-  let currentView = view;
-
-  while (currentView) {
-    currentView = currentView.originalParentView || currentView.parentView;
-    if (!currentView || !currentView.name) return;
-
-    if (currentView.name.indexOf('Template.') > -1 && currentView.name.indexOf('Template.__dynamic') === -1) {
-      return currentView;
-    }
-  }
-}; // Get the view that contains the desired section's content and return it
-
-
-ohif_core.OHIF.blaze.getSectionContent = (view, sectionName) => {
-  let currentView = view;
-
-  while (!currentView._sectionMap || !currentView._sectionMap.get(sectionName)) {
-    currentView = ohif_core.OHIF.blaze.getParentTemplateView(currentView);
-    if (!currentView) return;
-  }
-
-  return currentView._sectionMap.get(sectionName);
 };
 
 var underscore = createCommonjsModule(function (module, exports) {
@@ -3203,9 +3133,9 @@ var underscore = createCommonjsModule(function (module, exports) {
 });
 var underscore_1 = underscore._;
 
-ohif_core.OHIF.cornerstone = {};
+OHIF.cornerstone = {};
 
-ohif_core.OHIF.cornerstone.getBoundingBox = (context, textLines, x, y, options) => {
+OHIF.cornerstone.getBoundingBox = (context, textLines, x, y, options) => {
   if (Object.prototype.toString.call(textLines) !== '[object Array]') {
     textLines = [textLines];
   }
@@ -3245,7 +3175,7 @@ ohif_core.OHIF.cornerstone.getBoundingBox = (context, textLines, x, y, options) 
   return boundingBox;
 };
 
-ohif_core.OHIF.cornerstone.pixelToPage = (element, position) => {
+OHIF.cornerstone.pixelToPage = (element, position) => {
   const enabledElement = cornerstone.getEnabledElement(element);
   const result = {
     x: 0,
@@ -3266,7 +3196,7 @@ ohif_core.OHIF.cornerstone.pixelToPage = (element, position) => {
   return result;
 };
 
-ohif_core.OHIF.cornerstone.repositionTextBox = (eventData, measurementData, config) => {
+OHIF.cornerstone.repositionTextBox = (eventData, measurementData, config) => {
   // Stop here if it's not a measurement creating
   if (!measurementData.isCreating) {
     return;
@@ -3275,7 +3205,7 @@ ohif_core.OHIF.cornerstone.repositionTextBox = (eventData, measurementData, conf
   const element = eventData.element;
   const enabledElement = cornerstone.getEnabledElement(element);
   const image = enabledElement.image;
-  const allowedBorders = ohif_core.OHIF.uiSettings.autoPositionMeasurementsTextCallOuts;
+  const allowedBorders = OHIF.uiSettings.autoPositionMeasurementsTextCallOuts;
   const allow = {
     T: !allowedBorders || underscore.contains(allowedBorders, 'T'),
     R: !allowedBorders || underscore.contains(allowedBorders, 'R'),
@@ -5208,7 +5138,7 @@ Expr = Sizzle.selectors = {
 				});
 		},
 
-		"ATTR": function( name, operator, check$$1 ) {
+		"ATTR": function( name, operator, check ) {
 			return function( elem ) {
 				var result = Sizzle.attr( elem, name );
 
@@ -5221,13 +5151,13 @@ Expr = Sizzle.selectors = {
 
 				result += "";
 
-				return operator === "=" ? result === check$$1 :
-					operator === "!=" ? result !== check$$1 :
-					operator === "^=" ? check$$1 && result.indexOf( check$$1 ) === 0 :
-					operator === "*=" ? check$$1 && result.indexOf( check$$1 ) > -1 :
-					operator === "$=" ? check$$1 && result.slice( -check$$1.length ) === check$$1 :
-					operator === "~=" ? ( " " + result.replace( rwhitespace, " " ) + " " ).indexOf( check$$1 ) > -1 :
-					operator === "|=" ? result === check$$1 || result.slice( 0, check$$1.length + 1 ) === check$$1 + "-" :
+				return operator === "=" ? result === check :
+					operator === "!=" ? result !== check :
+					operator === "^=" ? check && result.indexOf( check ) === 0 :
+					operator === "*=" ? check && result.indexOf( check ) > -1 :
+					operator === "$=" ? check && result.slice( -check.length ) === check :
+					operator === "~=" ? ( " " + result.replace( rwhitespace, " " ) + " " ).indexOf( check ) > -1 :
+					operator === "|=" ? result === check || result.slice( 0, check.length + 1 ) === check + "-" :
 					false;
 			};
 		},
@@ -13824,9 +13754,9 @@ return jQuery;
 } );
 });
 
-ohif_core.OHIF.string = {}; // Search for some string inside any object or array
+OHIF.string = {}; // Search for some string inside any object or array
 
-ohif_core.OHIF.string.search = (object, query, property = null, result = []) => {
+OHIF.string.search = (object, query, property = null, result = []) => {
   // Create the search pattern
   const pattern = new RegExp(jquery.trim(query), 'i');
 
@@ -13846,7 +13776,7 @@ ohif_core.OHIF.string.search = (object, query, property = null, result = []) => 
 
     if (underscore.isObject(item)) {
       // Search recursively the item if the current item is an object
-      ohif_core.OHIF.string.search(item, query, property, result);
+      OHIF.string.search(item, query, property, result);
     }
   }); // Return the found items
 
@@ -13855,7 +13785,7 @@ ohif_core.OHIF.string.search = (object, query, property = null, result = []) => 
 }; // Encode any string into a safe format for HTML id attribute
 
 
-ohif_core.OHIF.string.encodeId = input => {
+OHIF.string.encodeId = input => {
   const string = input && input.toString ? input.toString() : input; // Return an underscore if the given string is empty or if it's not a string
 
   if (string === '' || typeof string !== 'string') {
@@ -13869,16 +13799,16 @@ ohif_core.OHIF.string.encodeId = input => {
   return string.replace(/[^a-zA-Z0-9-]/g, converter);
 };
 
-const ui = meteor.Meteor.settings && meteor.Meteor.settings.public && meteor.Meteor.settings.public.ui;
-ohif_core.OHIF.uiSettings = ui || {};
+// TODO: Get the UI settings
+//OHIF.uiSettings = ui || {};
+
 /**
  * Get the offset for the given element
  *
  * @param {Object} element DOM element which will have the offser calculated
  * @returns {Object} Object containing the top and left offset
  */
-
-ohif_core.OHIF.ui.getOffset = element => {
+OHIF.ui.getOffset = element => {
   let top = 0;
   let left = 0;
 
@@ -13902,7 +13832,7 @@ ohif_core.OHIF.ui.getOffset = element => {
  */
 
 
-ohif_core.OHIF.ui.getScrollbarSize = () => {
+OHIF.ui.getScrollbarSize = () => {
   const inner = document.createElement('p');
   inner.style.width = '100%';
   inner.style.height = '100%';
@@ -13937,11 +13867,11 @@ ohif_core.OHIF.ui.getScrollbarSize = () => {
  * Check if the pressed key combination will result in a character input
  * Got from https://stackoverflow.com/questions/4179708/how-to-detect-if-the-pressed-key-will-produce-a-character-inside-an-input-text
  *
- * @returns {Boolean} Wheter the pressed key combination will input a character or not
+ * @returns {Boolean} Whether the pressed key combination will input a character or not
  */
 
 
-ohif_core.OHIF.ui.isCharacterKeyPress = event => {
+OHIF.ui.isCharacterKeyPress = event => {
   if (typeof event.which === 'undefined') {
     // This is IE, which only fires keypress events for printable keys
     return true;
@@ -13955,7 +13885,8 @@ ohif_core.OHIF.ui.isCharacterKeyPress = event => {
   return false;
 };
 
-ohif_core.OHIF.utils.sortBy = function () {
+// Return the array sorting function for its object's properties
+OHIF.utils.sortBy = function () {
   var fields = [].slice.call(arguments),
       n_fields = fields.length;
   return function (A, B) {
@@ -13992,33 +13923,33 @@ ohif_core.OHIF.utils.sortBy = function () {
   };
 };
 
-ohif_core.OHIF.viewer = {};
+OHIF.viewer = {};
 
-ohif_core.OHIF.user = ohif_core.OHIF.user || {}; // These should be overridden by the implementation
+OHIF.user = OHIF.user || {}; // These should be overridden by the implementation
 
-ohif_core.OHIF.user.schema = null;
+OHIF.user.schema = null;
 
-ohif_core.OHIF.user.userLoggedIn = () => false;
+OHIF.user.userLoggedIn = () => false;
 
-ohif_core.OHIF.user.getUserId = () => null;
+OHIF.user.getUserId = () => null;
 
-ohif_core.OHIF.user.getName = () => null;
+OHIF.user.getName = () => null;
 
-ohif_core.OHIF.user.getAccessToken = () => null;
+OHIF.user.getAccessToken = () => null;
 
-ohif_core.OHIF.user.login = () => new Promise((resolve, reject) => reject());
+OHIF.user.login = () => new Promise((resolve, reject) => reject());
 
-ohif_core.OHIF.user.logout = () => new Promise((resolve, reject) => reject());
+OHIF.user.logout = () => new Promise((resolve, reject) => reject());
 
-ohif_core.OHIF.user.getData = key => null;
+OHIF.user.getData = key => null;
 
-ohif_core.OHIF.user.setData = (key, value) => null;
+OHIF.user.setData = (key, value) => null;
 
-ohif_core.OHIF.user.validate = () => null;
+OHIF.user.validate = () => null;
 
-ohif_core.OHIF.object = {}; // Transforms a shallow object with keys separated by "." into a nested object
+OHIF.object = {}; // Transforms a shallow object with keys separated by "." into a nested object
 
-ohif_core.OHIF.object.getNestedObject = shallowObject => {
+OHIF.object.getNestedObject = shallowObject => {
   const nestedObject = {};
 
   for (let key in shallowObject) {
@@ -14046,7 +13977,7 @@ ohif_core.OHIF.object.getNestedObject = shallowObject => {
 }; // Transforms a nested object into a shallowObject merging its keys with "." character
 
 
-ohif_core.OHIF.object.getShallowObject = nestedObject => {
+OHIF.object.getShallowObject = nestedObject => {
   const shallowObject = {};
 
   const putValues = (baseKey, nestedObject, resultObject) => {
@@ -14130,8 +14061,8 @@ var btoa = function btoa(val) {
 function getAuthorizationHeader() {
   const headers = {}; // Check for OHIF.user since this can also be run on the server
 
-  const accessToken = ohif_core.OHIF.user && ohif_core.OHIF.user.getAccessToken && ohif_core.OHIF.user.getAccessToken();
-  const server = ohif_core.OHIF.servers.getCurrentServer();
+  const accessToken = OHIF.user && OHIF.user.getAccessToken && OHIF.user.getAccessToken();
+  const server = OHIF.servers.getCurrentServer();
 
   if (server && server.requestOptions && server.requestOptions.auth) {
     // HTTP Basic Auth (user:password)
@@ -14258,13 +14189,12 @@ const DICOMWeb$2 = {
   getNumber,
   getString
 };
-ohif_core.OHIF.DICOMWeb = DICOMWeb$2;
+OHIF.DICOMWeb = DICOMWeb$2;
 
 /**
  * Retrieves the current server configuration used to retrieve studies
  */
-
-ohif_core.OHIF.servers.getCurrentServer = () => {
+OHIF.servers.getCurrentServer = () => {
   return window.store.state.servers.find(server => server.active === true);
 };
 
@@ -14299,7 +14229,7 @@ const DICOMTagDescriptions = Object.create(Object.prototype, {
     enumerable: true,
     writable: false,
     value: function isValidTagNumber(tag) {
-      return typeof tag === NUMBER && tag >= 0 && tag <= 0xFFFFFFFF;
+      return typeof tag === NUMBER && tag >= 0 && tag <= 0xffffffff;
     }
   },
   isValidTag: {
@@ -17545,10 +17475,9 @@ initialTagDescriptionMap = null;
  * - studyDate {String}: date formatted as YYYYMMDD
  * - studyDescription {String}: study description string
  */
+OHIF.studies.getStudyBoxData = false;
 
-ohif_core.OHIF.studies.getStudyBoxData = false;
-
-ohif_core.OHIF.studies.loadingDict = new reactiveDict.ReactiveDict();
+OHIF.studies.loadingDict = new reactiveDict.ReactiveDict();
 /**
  * Load the study metadata and store its information locally
  *
@@ -17556,33 +17485,33 @@ ohif_core.OHIF.studies.loadingDict = new reactiveDict.ReactiveDict();
  * @returns {Promise} that will be resolved with the study metadata or rejected with an error
  */
 
-ohif_core.OHIF.studies.loadStudy = studyInstanceUid => new Promise((resolve, reject) => {
+OHIF.studies.loadStudy = studyInstanceUid => new Promise((resolve, reject) => {
   // Disable reactivity to get the current loading state
   let currentLoadingState;
   tracker.Tracker.nonreactive(() => {
-    currentLoadingState = ohif_core.OHIF.studies.loadingDict.get(studyInstanceUid) || '';
+    currentLoadingState = OHIF.studies.loadingDict.get(studyInstanceUid) || '';
   }); // Set the loading state as the study is not yet loaded
 
   if (currentLoadingState !== 'loading') {
-    ohif_core.OHIF.studies.loadingDict.set(studyInstanceUid, 'loading');
+    OHIF.studies.loadingDict.set(studyInstanceUid, 'loading');
   }
 
-  const studyLoaded = ohif_core.OHIF.viewer.Studies.findBy({
+  const studyLoaded = OHIF.viewer.Studies.findBy({
     studyInstanceUid: studyInstanceUid
   });
 
   if (studyLoaded) {
-    ohif_core.OHIF.studies.loadingDict.set(studyInstanceUid, 'loaded');
+    OHIF.studies.loadingDict.set(studyInstanceUid, 'loaded');
     resolve(studyLoaded);
     return;
   }
 
-  return ohif_core.OHIF.studies.retrieveStudyMetadata(studyInstanceUid).then(study => {
-    if (window.HipaaLogger && ohif_core.OHIF.user && ohif_core.OHIF.user.userLoggedIn && ohif_core.OHIF.user.userLoggedIn()) {
+  return OHIF.studies.retrieveStudyMetadata(studyInstanceUid).then(study => {
+    if (window.HipaaLogger && OHIF.user && OHIF.user.userLoggedIn && OHIF.user.userLoggedIn()) {
       window.HipaaLogger.logEvent({
         eventType: 'viewed',
-        userId: ohif_core.OHIF.user.getUserId(),
-        userName: ohif_core.OHIF.user.getName(),
+        userId: OHIF.user.getUserId(),
+        userName: OHIF.user.getName(),
         collectionName: 'Study',
         recordId: studyInstanceUid,
         patientId: study.patientId,
@@ -17591,28 +17520,28 @@ ohif_core.OHIF.studies.loadStudy = studyInstanceUid => new Promise((resolve, rej
     } // Once the data was retrieved, the series are sorted by series and instance number
 
 
-    ohif_core.OHIF.viewerbase.sortStudy(study); // Updates WADO-RS metaDataManager
+    OHIF.viewerbase.sortStudy(study); // Updates WADO-RS metaDataManager
 
-    ohif_core.OHIF.viewerbase.updateMetaDataManager(study); // Transform the study in a StudyMetadata object
+    OHIF.viewerbase.updateMetaDataManager(study); // Transform the study in a StudyMetadata object
 
-    const studyMetadata = new ohif_core.OHIF.metadata.StudyMetadata(study); // Add the display sets to the study
+    const studyMetadata = new OHIF.metadata.StudyMetadata(study); // Add the display sets to the study
 
-    study.displaySets = ohif_core.OHIF.viewerbase.sortingManager.getDisplaySets(studyMetadata);
+    study.displaySets = OHIF.viewerbase.sortingManager.getDisplaySets(studyMetadata);
     study.displaySets.forEach(displaySet => {
-      ohif_core.OHIF.viewerbase.stackManager.makeAndAddStack(study, displaySet);
+      OHIF.viewerbase.stackManager.makeAndAddStack(study, displaySet);
       studyMetadata.addDisplaySet(displaySet);
     }); // Persist study data into OHIF.viewer
 
-    ohif_core.OHIF.viewer.Studies.insert(study);
-    ohif_core.OHIF.viewer.StudyMetadataList.insert(study); // Add the study to the loading listener to allow loading progress handling
+    OHIF.viewer.Studies.insert(study);
+    OHIF.viewer.StudyMetadataList.insert(study); // Add the study to the loading listener to allow loading progress handling
 
-    const studyLoadingListener = ohif_core.OHIF.viewerbase.StudyLoadingListener.getInstance();
+    const studyLoadingListener = OHIF.viewerbase.StudyLoadingListener.getInstance();
     studyLoadingListener.addStudy(study); // Add the studyInstanceUid to the loaded state dictionary
 
-    ohif_core.OHIF.studies.loadingDict.set(studyInstanceUid, 'loaded');
+    OHIF.studies.loadingDict.set(studyInstanceUid, 'loaded');
     resolve(study);
   }).catch((...args) => {
-    ohif_core.OHIF.studies.loadingDict.set(studyInstanceUid, 'failed');
+    OHIF.studies.loadingDict.set(studyInstanceUid, 'failed');
     reject(args);
   });
 });
@@ -17626,26 +17555,25 @@ ohif_core.OHIF.studies.loadStudy = studyInstanceUid => new Promise((resolve, rej
  * @param studyInstanceUids The UIDs of the Studies to be retrieved
  * @return Promise
  */
-
-ohif_core.OHIF.studies.retrieveStudiesMetadata = (studyInstanceUids, seriesInstanceUids) => {
+OHIF.studies.retrieveStudiesMetadata = (studyInstanceUids, seriesInstanceUids) => {
   // Create an empty array to store the Promises for each metaData retrieval call
   const promises = []; // Loop through the array of studyInstanceUids
 
   studyInstanceUids.forEach(function (studyInstanceUid) {
     // Send the call and resolve or reject the related promise based on its outcome
-    const promise = ohif_core.OHIF.studies.retrieveStudyMetadata(studyInstanceUid, seriesInstanceUids); // Add the current promise to the array of promises
+    const promise = OHIF.studies.retrieveStudyMetadata(studyInstanceUid, seriesInstanceUids); // Add the current promise to the array of promises
 
     promises.push(promise);
   }); // When all of the promises are complete, this callback runs
 
   const promise = Promise.all(promises); // Warn the error on console if some retrieval failed
 
-  promise.catch(error => ohif_core.OHIF.log.warn(error));
+  promise.catch(error => OHIF.log.warn(error));
   return promise;
 };
 
+// Define the StudyMetaDataPromises object. This is used as a cache to store study meta data
 // promises and prevent unnecessary subsequent calls to the server
-
 const StudyMetaDataPromises = new Map();
 /**
  * Delete the cached study metadata retrieval promise to ensure that the browser will
@@ -17655,7 +17583,7 @@ const StudyMetaDataPromises = new Map();
  *
  */
 
-ohif_core.OHIF.studies.deleteStudyMetadataPromise = studyInstanceUid => {
+OHIF.studies.deleteStudyMetadataPromise = studyInstanceUid => {
   if (StudyMetaDataPromises.has(studyInstanceUid)) {
     StudyMetaDataPromises.delete(studyInstanceUid);
   }
@@ -17668,7 +17596,7 @@ ohif_core.OHIF.studies.deleteStudyMetadataPromise = studyInstanceUid => {
  */
 
 
-ohif_core.OHIF.studies.retrieveStudyMetadata = (studyInstanceUid, seriesInstanceUids) => {
+OHIF.studies.retrieveStudyMetadata = (studyInstanceUid, seriesInstanceUids) => {
   // @TODO: Whenever a study metadata request has failed, its related promise will be rejected once and for all
   // and further requests for that metadata will always fail. On failure, we probably need to remove the
   // corresponding promise from the "StudyMetaDataPromises" map...
@@ -17680,14 +17608,14 @@ ohif_core.OHIF.studies.retrieveStudyMetadata = (studyInstanceUid, seriesInstance
 
   const seriesKeys = Array.isArray(seriesInstanceUids) ? '|' + seriesInstanceUids.join('|') : '';
   const timingKey = `retrieveStudyMetadata[${studyInstanceUid}${seriesKeys}]`;
-  ohif_core.OHIF.log.time(timingKey); // Create a promise to handle the data retrieval
+  OHIF.log.time(timingKey); // Create a promise to handle the data retrieval
 
   const promise = new Promise((resolve, reject) => {
-    const server = ohif_core.OHIF.servers.getCurrentServer(); // If no study metadata is in the cache variable, we need to retrieve it from
+    const server = OHIF.servers.getCurrentServer(); // If no study metadata is in the cache variable, we need to retrieve it from
     // the server with a call.
 
     if (server.type === 'dicomWeb' && server.requestOptions.requestFromBrowser === true) {
-      ohif_core.OHIF.studies.services.WADO.RetrieveMetadata(server, studyInstanceUid).then(function (data) {
+      OHIF.studies.services.WADO.RetrieveMetadata(server, studyInstanceUid).then(function (data) {
         resolve(data);
       }, reject);
     }
@@ -17705,17 +17633,17 @@ const studySearchPromises = new Map();
  * @returns {Promise} resolved with an array of studies information or rejected with an error
  */
 
-ohif_core.OHIF.studies.searchStudies = filter => {
+OHIF.studies.searchStudies = filter => {
   const promiseKey = JSON.stringify(filter);
 
   if (studySearchPromises.has(promiseKey)) {
     return studySearchPromises.get(promiseKey);
   } else {
     const promise = new Promise((resolve, reject) => {
-      const server = ohif_core.OHIF.servers.getCurrentServer();
+      const server = OHIF.servers.getCurrentServer();
 
       if (server.type === 'dicomWeb' && server.requestOptions.requestFromBrowser === true) {
-        ohif_core.OHIF.studies.services.QIDO.Studies(server, filter).then(resolve, reject);
+        OHIF.studies.services.QIDO.Studies(server, filter).then(resolve, reject);
       }
     });
     studySearchPromises.set(promiseKey, promise);
@@ -17751,14 +17679,14 @@ class HotkeysContext {
     }
 
     if (!command) {
-      return ohif_core.OHIF.log.warn(`No command was defined for hotkey "${hotkey}"`);
+      return OHIF.log.warn(`No command was defined for hotkey "${hotkey}"`);
     }
 
     const bindingKey = `keydown.hotkey.${this.name}.${command}`;
 
     const bind = hotkey => $(document).bind(bindingKey, hotkey, event => {
       if (!this.enabled.get()) return;
-      ohif_core.OHIF.commands.run(command);
+      OHIF.commands.run(command);
       event.preventDefault();
     });
 
@@ -17828,9 +17756,9 @@ class HotkeysManager {
     return new Promise((resolve, reject) => {
       if (this.retrieveFunction) {
         this.retrieveFunction(contextName).then(resolve).catch(reject);
-      } else if (ohif_core.OHIF.user.userLoggedIn()) {
+      } else if (OHIF.user.userLoggedIn()) {
         try {
-          resolve(ohif_core.OHIF.user.getData(storageKey));
+          resolve(OHIF.user.getData(storageKey));
         } catch (error) {
           reject(error);
         }
@@ -18178,7 +18106,7 @@ class Bounded {
     this.options(options);
     this.setBoundedFlag(false); // Force to hardware acceleration to move element if browser supports translate property
 
-    this.useTransform = ohif_core.OHIF.ui.styleProperty.check('transform', 'translate(1px, 1px)');
+    this.useTransform = OHIF.ui.styleProperty.check('transform', 'translate(1px, 1px)');
   } // Set or change the instance options
 
 
@@ -18337,7 +18265,7 @@ class Bounded {
       }
 
       const translation = `translate(${translate.x}px, ${translate.y}px)`;
-      ohif_core.OHIF.ui.styleProperty.set(this.positionElement, 'transform', translation);
+      OHIF.ui.styleProperty.set(this.positionElement, 'transform', translation);
     };
 
     this.spatialChangedHandler = event => {
@@ -18380,7 +18308,7 @@ class Bounded {
 
 }
 
-ohif_core.OHIF.ui.Bounded = Bounded;
+OHIF.ui.Bounded = Bounded;
 
 jquery.fn.tempShow = function (callback) {
   const elementsToHide = [];
@@ -18427,7 +18355,7 @@ jquery.fn.adjustMax = function (dimension, modifierFn) {
 let zIndexBackdrop = 1060;
 let zIndexModal = 1061;
 
-ohif_core.OHIF.ui.showDialog = (templateName, dialogData = {}) => {
+OHIF.ui.showDialog = (templateName, dialogData = {}) => {
   // Check if the given template exists
   const template = templating.Template[templateName];
 
@@ -18514,7 +18442,7 @@ ohif_core.OHIF.ui.showDialog = (templateName, dialogData = {}) => {
   return promise;
 };
 
-ohif_core.OHIF.ui.repositionDialog = ($modal, x, y) => {
+OHIF.ui.repositionDialog = ($modal, x, y) => {
   const $dialog = $modal.find('.modal-dialog'); // Remove the margins and set its position as fixed
 
   $dialog.css({
@@ -18538,7 +18466,7 @@ ohif_core.OHIF.ui.repositionDialog = ($modal, x, y) => {
   $modal.toggle(isVisible);
 };
 
-ohif_core.OHIF.ui.unsavedChangesDialog = function (callback, options) {
+OHIF.ui.unsavedChangesDialog = function (callback, options) {
   // Render the dialog with the given template passing the promise object and callbacks
   const templateData = underscore.extend({}, options, {
     callback: callback
@@ -18547,6 +18475,7 @@ ohif_core.OHIF.ui.unsavedChangesDialog = function (callback, options) {
   blaze.Blaze.renderWithData(templating.Template.unsavedChangesDialog, templateData, document.body);
 };
 
+// Allow attaching to jQuery selectors
 $.fn.draggable = function (options) {
   makeDraggable(this, options);
   return this;
@@ -18567,7 +18496,7 @@ function makeDraggable(element, options = {}) {
 
   const {
     styleProperty
-  } = ohif_core.OHIF.ui;
+  } = OHIF.ui;
   const useTransform = styleProperty.check('transform', 'translate(1px, 1px)');
   const $container = $(options.container || window);
   let diffX;
@@ -18763,7 +18692,7 @@ function makeDraggable(element, options = {}) {
   $element.on('touchend', mouseUpHandler);
 }
 
-ohif_core.OHIF.ui.showDropdown = (items = [], options = {}) => {
+OHIF.ui.showDropdown = (items = [], options = {}) => {
   let promiseResolve;
   let promiseReject;
   const promise = new Promise((resolve, reject) => {
@@ -18845,14 +18774,14 @@ Notifications.show = ({
   const templateObject = templating.Template[template];
 
   if (template && !templateObject) {
-    throw new meteor.Meteor.Error('TEMPLATE_NOT_FOUND', `Template ${template} not found.`);
+    throw new .Meteor.Error('TEMPLATE_NOT_FOUND', `Template ${template} not found.`);
   } // Check if there is a notification area container
 
 
   const $area = jquery('#notificationArea');
 
   if (!$area.length) {
-    throw new meteor.Meteor.Error('NOTIFICATION_AREA_NOT_FOUND', `Notification area not found.`);
+    throw new .Meteor.Error('NOTIFICATION_AREA_NOT_FOUND', `Notification area not found.`);
   }
 
   let notificationPromise;
@@ -18894,7 +18823,7 @@ Notifications.show = ({
   notificationPromise.then(dismissNotification).catch(dismissNotification); // Destroy the created notification view if the given timeout time has passed
 
   if (timeout > 0) {
-    meteor.Meteor.setTimeout(() => {
+    .Meteor.setTimeout(() => {
       if (templateData.promiseResolve) {
         templateData.promiseResolve();
       } else {
@@ -18923,9 +18852,9 @@ Notifications.danger = o => Notifications.show(Object.assign({}, o, {
   style: 'danger'
 }));
 
-ohif_core.OHIF.ui.notifications = Notifications;
+OHIF.ui.notifications = Notifications;
 
-ohif_core.OHIF.ui.showPopover = (templateName, popoverData, options = {}) => {
+OHIF.ui.showPopover = (templateName, popoverData, options = {}) => {
   // Check if the given template exists
   const template = templating.Template[templateName];
 
@@ -19180,7 +19109,7 @@ class Resizable {
 
 }
 
-ohif_core.OHIF.ui.Resizable = Resizable;
+OHIF.ui.Resizable = Resizable;
 
 const FUNCTION = 'function';
 const STRING$1 = 'string';
@@ -19593,7 +19522,7 @@ const unsavedChanges = {
         message: "Your changes will be lost if you don't save them before leaving the current page... Are you sure you want to proceed?"
       }, options);
 
-      ohif_core.OHIF.ui.showDialog('dialogConfirm', dialogOptions).then(function () {
+      OHIF.ui.showDialog('dialogConfirm', dialogOptions).then(function () {
         // Unsaved changes exist but user confirms action...
         shouldProceed = true;
         callback.call(null, shouldProceed, hasChanges);
@@ -19635,7 +19564,7 @@ const unsavedChanges = {
     if (probe > 0) {
       // Unsaved changes exist...
       hasChanges = true;
-      ohif_core.OHIF.ui.unsavedChangesDialog(function (choice) {
+      OHIF.ui.unsavedChangesDialog(function (choice) {
         callback.call(null, hasChanges, choice);
       }, options);
     } else {
@@ -19675,7 +19604,7 @@ const unsavedChanges = {
         };
       }
 
-      ohif_core.OHIF.ui.unsavedChanges.presentProactiveDialog(options.path, (hasChanges, userChoice) => {
+      OHIF.ui.unsavedChanges.presentProactiveDialog(options.path, (hasChanges, userChoice) => {
         if (!hasChanges) return;
 
         const clear = () => this.clear(options.path, true);
@@ -19714,16 +19643,16 @@ const unsavedChanges = {
   }
 
 };
-ohif_core.OHIF.ui.unsavedChanges = unsavedChanges;
+OHIF.ui.unsavedChanges = unsavedChanges;
 
-ohif_core.OHIF.ui.handleError = error => {
+OHIF.ui.handleError = error => {
   let {
     title,
     message
   } = error;
 
   if (!title) {
-    if (error instanceof meteor.Meteor.Error) {
+    if (error instanceof .Meteor.Error) {
       title = error.error;
     } else if (error instanceof Error) {
       title = error.name;
@@ -19731,7 +19660,7 @@ ohif_core.OHIF.ui.handleError = error => {
   }
 
   if (!message) {
-    if (error instanceof meteor.Meteor.Error) {
+    if (error instanceof .Meteor.Error) {
       message = error.reason;
     } else if (error instanceof Error) {
       message = error.message;
@@ -19746,14 +19675,13 @@ ohif_core.OHIF.ui.handleError = error => {
     cancelLabel: 'Dismiss',
     cancelClass: 'btn-secondary'
   }, error || {});
-  ohif_core.OHIF.log.error(error); // TODO: Find a better way to handle errors instead of displaying a dialog for all of them.
+  OHIF.log.error(error); // TODO: Find a better way to handle errors instead of displaying a dialog for all of them.
   // OHIF.ui.showDialog('dialogForm', data);
 };
 
 /*
  * https://github.com/swederik/dragula/blob/ccc15d75186f5168e7abadbe3077cf12dab09f8b/styleProperty.js
  */
-
 (function () {
 
   const browserProps = {};
@@ -19767,7 +19695,7 @@ ohif_core.OHIF.ui.handleError = error => {
     }
   }
 
-  function check$$1(property, testValue) {
+  function check(property, testValue) {
     const sandbox = document.createElement('iframe');
     const element = document.createElement('p');
     document.body.appendChild(sandbox);
@@ -19806,15 +19734,15 @@ ohif_core.OHIF.ui.handleError = error => {
   }
 
   const styleProperty = {
-    check: check$$1,
+    check,
     set
   };
-  ohif_core.OHIF.ui.styleProperty = styleProperty;
+  OHIF.ui.styleProperty = styleProperty;
 })();
 
 const {
   styleProperty
-} = ohif_core.OHIF.ui;
+} = OHIF.ui;
 
 /*
  * Defines the base OHIF header object
@@ -41630,7 +41558,7 @@ var SimpleSchema = function () {
     var schema = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
 
     var _ref = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {},
-        check$$1 = _ref.check,
+        check = _ref.check,
         cleanOptions = _ref.clean,
         defaultLabel = _ref.defaultLabel,
         _ref$humanizeAutoLabe = _ref.humanizeAutoLabels,
@@ -41646,7 +41574,7 @@ var SimpleSchema = function () {
 
     // Stash the options object
     this._constructorOptions = {
-      check: check$$1,
+      check: check,
       defaultLabel: defaultLabel,
       humanizeAutoLabels: humanizeAutoLabels,
       requiredByDefault: requiredByDefault,
@@ -42253,11 +42181,11 @@ var SimpleSchema = function () {
       var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
 
       // For Meteor apps, `check` option can be passed to silence audit-argument-checks
-      var check$$1 = options.check || this._constructorOptions.check;
-      if (typeof check$$1 === 'function') {
+      var check = options.check || this._constructorOptions.check;
+      if (typeof check === 'function') {
         // Call check but ignore the error
         try {
-          check$$1(obj);
+          check(obj);
         } catch (e) {/* ignore error */}
       }
 
@@ -42957,10 +42885,26 @@ function absoluteUrl(path) {
   return absolutePath.replace(/\/\/+/g, '/');
 }
 
+// TODO: figure out where else to put this function
+function addServers(servers, store) {
+  Object.keys(servers).forEach(serverType => {
+    const endpoints = servers[serverType];
+    endpoints.forEach(endpoint => {
+      const server = Object.assign({}, endpoint);
+      server.type = serverType;
+      store.dispatch({
+        type: 'ADD_SERVER',
+        server
+      });
+    });
+  });
+}
+
 const utils = {
   guid,
   ObjectPath,
-  absoluteUrl
+  absoluteUrl,
+  addServers
 };
 
 /**
@@ -43562,7 +43506,7 @@ class ImageSet {
       enumerable: false,
       configurable: false,
       writable: false,
-      value: ohif_core.OHIF.utils.guid() // Unique ID of the instance
+      value: OHIF.utils.guid() // Unique ID of the instance
 
     });
   }
@@ -44103,7 +44047,7 @@ class OHIFInstanceMetadata extends InstanceMetadata {
   getImageId(frame, thumbnail) {
     // If _imageID is not cached, create it
     if (this._imageId === null) {
-      this._imageId = ohif_core.OHIF.viewerbase.getImageId(this.getData(), frame, thumbnail);
+      this._imageId = OHIF.viewerbase.getImageId(this.getData(), frame, thumbnail);
     }
 
     return this._imageId;
@@ -44241,21 +44185,6 @@ const metadata = {
   OHIFInstanceMetadata
 };
 
-// Check the servers on meteor startup
-const servers = meteor.Meteor.settings.public.servers;
-Object.keys(servers).forEach(serverType => {
-  const endpoints = servers[serverType];
-  endpoints.forEach(endpoint => {
-    const server = Object.assign({}, endpoint);
-    server.type = serverType; // TODO: figure out where else to put this function
-
-    window.store.dispatch({
-      type: 'ADD_SERVER',
-      server
-    });
-  });
-});
-
 /**
  * A small set of utilities to help parsing DICOM element values.
  * In the future the functionality provided by this library might
@@ -44269,7 +44198,7 @@ const parsingUtils = {
    * @returns {Boolean} Returns true if data is a valid instance of the dicomParser.DataSet class.
    */
   isValidDataSet: function (data) {
-    return data instanceof ohif_cornerstone.dicomParser.DataSet;
+    return data instanceof dicomParser.DataSet;
   },
 
   /**
@@ -44306,7 +44235,7 @@ const parsingUtils = {
       let element = data.elements[tag];
 
       if (element && element.length > 0) {
-        let string = ohif_cornerstone.dicomParser.readFixedString(data.byteArray, element.dataOffset, element.length);
+        let string = dicomParser.readFixedString(data.byteArray, element.dataOffset, element.length);
 
         if (typeof string === 'string' && string.length > 0) {
           if (typeof parser !== 'function') {
@@ -44673,7 +44602,7 @@ class MetadataProvider {
 
 }
 
-const cornerstone$1 = {
+const cornerstone$2 = {
   MetadataProvider
 };
 
@@ -44688,17 +44617,17 @@ class CommandsManager {
     const context = this.contexts[contextName];
 
     if (!context) {
-      return ohif_core.OHIF.log.warn(`No context found with name "${contextName}"`);
+      return OHIF.log.warn(`No context found with name "${contextName}"`);
     }
 
     return context;
   }
 
   getCurrentContext() {
-    const contextName = ohif_core.OHIF.context.get();
+    const contextName = OHIF.context.get();
 
     if (!contextName) {
-      return ohif_core.OHIF.log.warn('There is no selected context');
+      return OHIF.log.warn('There is no selected context');
     }
 
     return this.getContext(contextName);
@@ -44740,7 +44669,7 @@ class CommandsManager {
     const definition = context[command];
 
     if (!definition) {
-      return ohif_core.OHIF.log.warn(`Trying to set a disabled function to a command "${command}" that was not yet defined`);
+      return OHIF.log.warn(`Trying to set a disabled function to a command "${command}" that was not yet defined`);
     }
 
     definition.disabled = func;
@@ -44772,7 +44701,7 @@ class CommandsManager {
     const definition = this.getDefinition(command);
 
     if (!definition) {
-      return ohif_core.OHIF.log.warn(`Command "${command}" not found in current context`);
+      return OHIF.log.warn(`Command "${command}" not found in current context`);
     }
 
     const {
@@ -44782,7 +44711,7 @@ class CommandsManager {
     if (this.isDisabled(command)) return;
 
     if (typeof action !== 'function') {
-      return ohif_core.OHIF.log.warn(`No action was defined for command "${command}"`);
+      return OHIF.log.warn(`No action was defined for command "${command}"`);
     } else {
       const result = action(params);
 
@@ -44841,7 +44770,7 @@ class StudyPrefetcher {
   }
 
   prefetchActiveViewport() {
-    const activeViewportElement = ohif_core.OHIF.viewerbase.viewportUtils.getActiveViewportElement();
+    const activeViewportElement = OHIF.viewerbase.viewportUtils.getActiveViewportElement();
     this.enablePrefetchOnElement(activeViewportElement);
     this.attachActiveViewportListeners(activeViewportElement);
   }
@@ -44877,10 +44806,10 @@ class StudyPrefetcher {
     if (this.hasStack(element)) {
       // Check if this is a clip or not
       const activeViewportIndex = window.store.getState().viewports.activeViewport;
-      const displaySetInstanceUid = ohif_core.OHIF.viewer.data.loadedSeriesData[activeViewportIndex].displaySetInstanceUid;
+      const displaySetInstanceUid = OHIF.viewer.data.loadedSeriesData[activeViewportIndex].displaySetInstanceUid;
       const {
         StackManager
-      } = ohif_core.OHIF.viewerbase;
+      } = OHIF.viewerbase;
       const stack = StackManager.findStack(displaySetInstanceUid);
 
       if (!stack) {
@@ -44923,8 +44852,8 @@ class StudyPrefetcher {
   prefetchDisplaySets() {
     let config;
 
-    if (meteor.Meteor.settings && meteor.Meteor.settings.public && meteor.Meteor.settings.prefetch) {
-      config = meteor.Meteor.settings.public.prefetch;
+    if (.Meteor.settings && .Meteor.settings.public && .Meteor.settings.prefetch) {
+      config = .Meteor.settings.public.prefetch;
     } else {
       config = {
         order: 'closest',
@@ -44952,7 +44881,7 @@ class StudyPrefetcher {
   }
 
   getActiveViewportImage() {
-    const element = ohif_core.OHIF.viewerbase.viewportUtils.getActiveViewportElement();
+    const element = OHIF.viewerbase.viewportUtils.getActiveViewportElement();
 
     if (!element) {
       return;
@@ -44965,12 +44894,12 @@ class StudyPrefetcher {
 
   getStudy(image) {
     const studyMetadata = cornerstone.metaData.get('study', image.imageId);
-    return ohif_core.OHIF.viewer.Studies.find(study => study.studyInstanceUid === studyMetadata.studyInstanceUid);
+    return OHIF.viewer.Studies.find(study => study.studyInstanceUid === studyMetadata.studyInstanceUid);
   }
 
   getSeries(study, image) {
     const seriesMetadata = cornerstone.metaData.get('series', image.imageId);
-    const studyMetadata = ohif_core.OHIF.viewerbase.getStudyMetadata(study);
+    const studyMetadata = OHIF.viewerbase.getStudyMetadata(study);
     return studyMetadata.getSeriesByUID(seriesMetadata.seriesInstanceUid);
   }
 
@@ -45010,7 +44939,7 @@ class StudyPrefetcher {
 
     if (!getDisplaySets) {
       if (prefetchOrder) {
-        ohif_core.OHIF.log.warn(`Invalid prefetch order configuration (${prefetchOrder})`);
+        OHIF.log.warn(`Invalid prefetch order configuration (${prefetchOrder})`);
       }
 
       return [];
@@ -45076,17 +45005,17 @@ class StudyPrefetcher {
 
   getImageIdsFromDisplaySet(displaySet) {
     /*displaySet.images.forEach(image => {
-        const numFrames = image.numFrames;
-        if (numFrames > 1) {
-            for (let i = 0; i < numFrames; i++) {
-                let imageId = getImageId(image, i);
+            const numFrames = image.numFrames;
+            if (numFrames > 1) {
+                for (let i = 0; i < numFrames; i++) {
+                    let imageId = getImageId(image, i);
+                    imageIds.push(imageId);
+                }
+            } else {
+                let imageId = getImageId(image);
                 imageIds.push(imageId);
             }
-        } else {
-            let imageId = getImageId(image);
-            imageIds.push(imageId);
-        }
-    });*/
+        });*/
 
     return []; //imageIds;
   }
@@ -45103,7 +45032,7 @@ class StudyPrefetcher {
   }
 
   cacheFullHandler() {
-    ohif_core.OHIF.log.warn('Cache full');
+    OHIF.log.warn('Cache full');
     this.stopPrefetching();
   }
 
@@ -45118,12 +45047,12 @@ class ResizeViewportManager {
 
 
   repositionStudySeriesQuickSwitch() {
-    ohif_core.OHIF.log.info('ResizeViewportManager repositionStudySeriesQuickSwitch'); // Stop here if viewer is not displayed
+    OHIF.log.info('ResizeViewportManager repositionStudySeriesQuickSwitch'); // Stop here if viewer is not displayed
 
     const isViewer = session.Session.get('ViewerOpened');
     if (!isViewer) return; // Stop here if there is no one or only one viewport
 
-    const nViewports = ohif_core.OHIF.viewer.layoutManager.viewportData.length;
+    const nViewports = OHIF.viewer.layoutManager.viewportData.length;
     if (!nViewports || nViewports <= 1) return;
     const $viewer = jquery('#viewer');
     const leftSidebar = $viewer.find('.sidebar-left.sidebar-open');
@@ -45156,7 +45085,7 @@ class ResizeViewportManager {
 
 
   relocateDialogs() {
-    ohif_core.OHIF.log.info('ResizeViewportManager relocateDialogs');
+    OHIF.log.info('ResizeViewportManager relocateDialogs');
     const $bottomRightDialogs = jquery('#annotationDialog, #textMarkerOptionsDialog');
     $bottomRightDialogs.css({
       top: '',
@@ -45176,7 +45105,7 @@ class ResizeViewportManager {
 
 
   resizeScrollbars(element) {
-    ohif_core.OHIF.log.info('ResizeViewportManager resizeScrollbars');
+    OHIF.log.info('ResizeViewportManager resizeScrollbars');
     const $currentOverlay = jquery(element).siblings('.imageViewerViewportOverlay');
     $currentOverlay.find('.scrollbar').trigger('rescale');
   } // Resize a single viewport element
@@ -45193,11 +45122,11 @@ class ResizeViewportManager {
 
     cornerstone.resize(element, fitToWindow);
     /*if (enabledElement.fitToWindow === false) {
-        const imageId = enabledElement.image.imageId;
-        const instance = cornerstone.metaData.get('instance', imageId);
-        const instanceClassViewport = getInstanceClassDefaultViewport(instance, enabledElement, imageId);
-        cornerstone.setViewport(element, instanceClassViewport);
-    }*/
+            const imageId = enabledElement.image.imageId;
+            const instance = cornerstone.metaData.get('instance', imageId);
+            const instanceClassViewport = getInstanceClassDefaultViewport(instance, enabledElement, imageId);
+            cornerstone.setViewport(element, instanceClassViewport);
+        }*/
   } // Resize each viewport element
 
 
@@ -45224,7 +45153,7 @@ class ResizeViewportManager {
   handleResize() {
     clearTimeout(this.resizeTimer);
     this.resizeTimer = setTimeout(() => {
-      ohif_core.OHIF.log.info('ResizeViewportManager resizeViewportElements');
+      OHIF.log.info('ResizeViewportManager resizeViewportElements');
       this.resizeViewportElements();
     }, 100);
   }
@@ -45338,7 +45267,7 @@ class DICOMFileLoadingListener extends BaseLoadingListener {
   }
 
   _checkCachedData() {
-    const dataSet = ohif_cornerstone.cornerstoneWADOImageLoader.wadouri.dataSetCacheManager.get(this._dataSetUrl);
+    const dataSet = cornerstoneWADOImageLoader.wadouri.dataSetCacheManager.get(this._dataSetUrl);
 
     if (dataSet) {
       const dataSetLength = dataSet.byteArray.length;
@@ -45361,13 +45290,13 @@ class DICOMFileLoadingListener extends BaseLoadingListener {
     const imageLoadProgressEventHandle = this._imageLoadProgressEventHandle.bind(this);
 
     this.stopListening();
-    ohif_cornerstone.cornerstone.events.addEventListener(imageLoadProgressEventName, imageLoadProgressEventHandle);
+    cornerstone$1.events.addEventListener(imageLoadProgressEventName, imageLoadProgressEventHandle);
   }
 
   stopListening() {
     const imageLoadProgressEventName = this._getImageLoadProgressEventName();
 
-    ohif_cornerstone.cornerstone.events.removeEventListener(imageLoadProgressEventName);
+    cornerstone$1.events.removeEventListener(imageLoadProgressEventName);
   }
 
   _imageLoadProgressEventHandle(e) {
@@ -45462,12 +45391,12 @@ class StackLoadingListener extends BaseLoadingListener {
     // TODO: No way to check status of Promise.
 
     /*for(let i = 0; i < imageIds.length; i++) {
-        const imageId = imageIds[i];
-         const imagePromise = cornerstone.imageCache.getImageLoadObject(imageId).promise;
-         if (imagePromise && (imagePromise.state() === 'resolved')) {
-            this._updateFrameStatus(imageId, true);
-        }
-    }*/
+            const imageId = imageIds[i];
+             const imagePromise = cornerstone.imageCache.getImageLoadObject(imageId).promise;
+             if (imagePromise && (imagePromise.state() === 'resolved')) {
+                this._updateFrameStatus(imageId, true);
+            }
+        }*/
   }
 
   _getImageLoadedEventName() {
@@ -45488,8 +45417,8 @@ class StackLoadingListener extends BaseLoadingListener {
     const imageCachePromiseRemovedEventHandle = this._imageCachePromiseRemovedEventHandle.bind(this);
 
     this.stopListening();
-    ohif_cornerstone.cornerstone.events.addEventListener(imageLoadedEventName, imageLoadedEventHandle);
-    ohif_cornerstone.cornerstone.events.addEventListener(imageCachePromiseRemovedEventName, imageCachePromiseRemovedEventHandle);
+    cornerstone$1.events.addEventListener(imageLoadedEventName, imageLoadedEventHandle);
+    cornerstone$1.events.addEventListener(imageCachePromiseRemovedEventName, imageCachePromiseRemovedEventHandle);
   }
 
   stopListening() {
@@ -45497,8 +45426,8 @@ class StackLoadingListener extends BaseLoadingListener {
 
     const imageCachePromiseRemovedEventName = this._getImageCachePromiseRemoveEventName();
 
-    ohif_cornerstone.cornerstone.events.removeEventListener(imageLoadedEventName);
-    ohif_cornerstone.cornerstone.events.removeEventListener(imageCachePromiseRemovedEventName);
+    cornerstone$1.events.removeEventListener(imageLoadedEventName);
+    cornerstone$1.events.removeEventListener(imageCachePromiseRemovedEventName);
   }
 
   _updateFrameStatus(imageId, loaded) {
@@ -45558,7 +45487,7 @@ class StackLoadingListener extends BaseLoadingListener {
     }
 
     progressBar += ']';
-    ohif_core.OHIF.log.info(`${displaySetInstanceUid}: ${progressBar}`);
+    OHIF.log.info(`${displaySetInstanceUid}: ${progressBar}`);
   }
 
 }
@@ -45571,7 +45500,7 @@ const PROPERTY_SEPARATOR = '.';
 const ORDER_ASC = 'asc';
 const ORDER_DESC = 'desc';
 const MIN_COUNT = 0x00000000;
-const MAX_COUNT = 0x7FFFFFFF;
+const MAX_COUNT = 0x7fffffff;
 /**
  * Class Definition
  */
@@ -45709,7 +45638,7 @@ class TypeSafeCollection {
         found = this._elementWithPayload(payload, true);
 
     if (!found) {
-      id = ohif_core.OHIF.utils.guid();
+      id = OHIF.utils.guid();
 
       this._elements(true).push({
         id,
@@ -46568,7 +46497,7 @@ const OHIF$1 = {
   metadata,
   hotkeys,
   header,
-  cornerstone: cornerstone$1 //commands
+  cornerstone: cornerstone$2 //commands
 
 };
 
@@ -46579,7 +46508,7 @@ exports.classes = classes;
 exports.metadata = metadata;
 exports.hotkeys = hotkeys;
 exports.header = header;
-exports.cornerstone = cornerstone$1;
+exports.cornerstone = cornerstone$2;
 exports.OHIF = OHIF$1;
 exports.default = OHIF$1;
 //# sourceMappingURL=index.js.map

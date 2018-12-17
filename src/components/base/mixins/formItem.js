@@ -1,7 +1,7 @@
-import { OHIF } from 'meteor/ohif:core';
+
 import { Template } from 'meteor/templating';
 import { Tracker } from 'meteor/tracker';
-import { Meteor } from 'meteor/meteor';
+import { Meteor } from '';
 import _ from 'underscore';
 import $ from 'jquery';
 

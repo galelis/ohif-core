@@ -1,6 +1,6 @@
 import { Template } from 'meteor/templating';
 import $ from 'jquery';
-import { OHIF } from 'meteor/ohif:core';
+
 
 /*
  * action: controls an element that will trigger some form API's method

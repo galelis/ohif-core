@@ -2,7 +2,7 @@ import { Template } from 'meteor/templating';
 import { ReactiveVar } from 'meteor/reactive-var';
 import $ from 'jquery';
 import _ from 'underscore';
-import { OHIF } from 'meteor/ohif:core';
+
 
 Template.hotkeysForm.onCreated(() => {
     const instance = Template.instance();

@@ -1,4 +1,4 @@
-import { OHIF } from 'meteor/ohif:core';
+
 
 /*
  * Base component to template instances of all dynamic components

@@ -1,7 +1,7 @@
 import { Template } from 'meteor/templating';
 import { Tracker } from 'meteor/tracker';
 import { ReactiveVar } from 'meteor/reactive-var';
-import { OHIF } from 'meteor/ohif:core';
+
 
 Template.section.onCreated(() => {
     const instance = Template.instance();

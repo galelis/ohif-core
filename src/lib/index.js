@@ -1,4 +1,3 @@
-import './blaze.js';
 import './cornerstone.js';
 import './string.js';
 import './ui.js';
@@ -15,4 +14,3 @@ import './retrieveStudiesMetadata';
 import './retrieveStudyMetadata';
 import './searchStudies';
 import './parseFloatArray';
-

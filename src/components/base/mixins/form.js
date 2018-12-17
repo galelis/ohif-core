@@ -1,4 +1,4 @@
-import { OHIF } from 'meteor/ohif:core';
+
 import { Template } from 'meteor/templating';
 import { Tracker } from 'meteor/tracker';
 import { Spacebars } from 'meteor/spacebars';

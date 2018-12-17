@@ -1,4 +1,4 @@
-import { OHIF } from 'meteor/ohif:core';
+
 
 OHIF.ui.repositionDialog = ($modal, x, y) => {
     const $dialog = $modal.find('.modal-dialog');

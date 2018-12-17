@@ -1,10 +1,10 @@
-import { Meteor } from 'meteor/meteor';
+import { Meteor } from '';
 import { Template } from 'meteor/templating';
 import { Blaze } from 'meteor/blaze';
 import { ReactiveVar } from 'meteor/reactive-var';
 import $ from 'jquery';
 import _ from 'underscore';
-import { OHIF } from 'meteor/ohif:core';
+
 
 /*
  * dropdown: controls a dropdown

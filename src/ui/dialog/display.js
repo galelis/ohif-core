@@ -2,7 +2,7 @@ import { Template } from 'meteor/templating';
 import { Blaze } from 'meteor/blaze';
 import _ from 'underscore';
 import $ from 'jquery';
-import { OHIF } from 'meteor/ohif:core';
+
 
 let zIndexBackdrop = 1060;
 let zIndexModal = 1061;

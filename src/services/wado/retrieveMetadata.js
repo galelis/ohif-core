@@ -1,4 +1,4 @@
-import { OHIF } from 'meteor/ohif:core';
+
 import DICOMwebClient from 'dicomweb-client';
 
 import { parseFloatArray } from '../../lib/parseFloatArray';

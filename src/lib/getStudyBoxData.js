@@ -1,5 +1,3 @@
-import { OHIF } from 'meteor/ohif:core';
-
 /**
  * Overridable namespace to allow getting study boxes data externally.
  *

@@ -1,7 +1,7 @@
 import { Template } from 'meteor/templating';
 import { Blaze } from 'meteor/blaze';
 import _ from 'underscore';
-import { OHIF } from 'meteor/ohif:core';
+
 
 OHIF.ui.unsavedChangesDialog = function(callback, options) {
 

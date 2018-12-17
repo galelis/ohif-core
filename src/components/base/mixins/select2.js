@@ -3,7 +3,7 @@ import { ReactiveVar } from 'meteor/reactive-var';
 import { Tracker } from 'meteor/tracker';
 import _ from 'underscore';
 import $ from 'jquery';
-import { OHIF } from 'meteor/ohif:core';
+
 
 /*
  * input: controls a select2 component

@@ -1,7 +1,7 @@
-import { Meteor } from 'meteor/meteor';
+import { Meteor } from '';
 import { Template } from 'meteor/templating';
 import $ from 'jquery';
-import { OHIF } from 'meteor/ohif:core';
+
 
 /*
  * popover: controls a popover

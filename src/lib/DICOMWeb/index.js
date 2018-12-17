@@ -1,4 +1,4 @@
-import { OHIF } from 'meteor/ohif:core';
+
 
 import getAttribute from './getAttribute.js';
 import getAuthorizationHeader from './getAuthorizationHeader.js';

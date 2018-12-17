@@ -1,6 +1,6 @@
 import { Template } from 'meteor/templating';
 import $ from 'jquery';
-import { OHIF } from 'meteor/ohif:core';
+
 
 Template.header.onCreated(() => {
     const instance = Template.instance();

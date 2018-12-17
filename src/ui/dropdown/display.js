@@ -1,6 +1,6 @@
 import { Template } from 'meteor/templating';
 import { Blaze } from 'meteor/blaze';
-import { OHIF } from 'meteor/ohif:core';
+
 
 OHIF.ui.showDropdown = (items=[], options={}) => {
     let promiseResolve;

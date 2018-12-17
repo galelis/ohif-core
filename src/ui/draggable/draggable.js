@@ -1,4 +1,4 @@
-import { OHIF } from 'meteor/ohif:core';
+
 
 // Allow attaching to jQuery selectors
 $.fn.draggable = function(options) {

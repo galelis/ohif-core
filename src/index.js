@@ -8,7 +8,6 @@ import header from './header.js';
 import './schema.js';
 import utils from './utils/';
 import metadata from './classes/metadata/';
-import './startup.js';
 import cornerstone from './cornerstone.js';
 import classes from './classes/';
 import redux from './redux/';
